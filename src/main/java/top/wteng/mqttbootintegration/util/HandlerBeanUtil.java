@@ -1,45 +1,82 @@
 package top.wteng.mqttbootintegration.util;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.regex.Pattern;
 
 import org.springframework.context.ApplicationContext;
 
 import top.wteng.mqttbootintegration.annotation.Handler;
 import top.wteng.mqttbootintegration.annotation.MessagePattern;
+import top.wteng.mqttbootintegration.entity.HandlerCache;
 
 public class HandlerBeanUtil {
-    private static final Map<String, Method> messageHandler = new HashMap<>();
+    private static final List<HandlerCache> messageHandlers = new ArrayList<>();
+    private static final String WILDCARD_ALL = "#";
+    private static final String WILDCARD_PART = "+";
+    private static final String SEPARATOR = "/";
     
-    public static List<String> getMessagePatterns(ApplicationContext context) {
+    public static List<String> getAndCacheMessagePatterns(ApplicationContext context) {
         return Arrays.asList(context.getBeanNamesForAnnotation(Handler.class))
-                                .parallelStream()
-                                .map(beanName -> context.getBean(beanName).getClass())
-                                .flatMap(handerClass -> Arrays.asList(handerClass.getDeclaredMethods()).stream())
-                                .peek(method -> {
-                                    MessagePattern mp = method.getDeclaredAnnotation(MessagePattern.class);
-                                    if (mp != null && !messageHandler.containsKey(mp.value())) {
-                                        messageHandler.put(mp.value(), method);
-                                    }
-                                })
-                                .map(method -> method.getDeclaredAnnotation(MessagePattern.class))
-                                .filter(mp -> mp != null)
-                                .map(mp -> mp.value())
-                                .collect(Collectors.toList());
+                .parallelStream()
+                .map(context::getBean)
+                .flatMap(bean -> {
+                    Class<?> handlerClass = bean.getClass();
+                    List<HandlerCache> mhs = new ArrayList<>();
+                    Method[] methods = handlerClass.getDeclaredMethods();
+                    for (Method m: methods) {
+                        MessagePattern mp = m.getDeclaredAnnotation(MessagePattern.class);
+                        if (mp != null && !isMessageHandlersHas(mp.value())) {
+                            Class<?>[] parameterTypes = m.getParameterTypes();
+                            mhs.add(new HandlerCache(mp.value(), bean, m, parameterTypes.length > 1 ? parameterTypes[1] : String.class));
+                        }
+                    }
+                    messageHandlers.addAll(mhs);
+                    return mhs.stream();
+                })
+                .map(HandlerCache::getMessagePattern)
+                .collect(Collectors.toList());
     }
 
-    public static Method getHandlerMethod(String topic) {
-        String mKey = messageHandler.keySet().stream()
-                        .filter(key -> Pattern.matches(key, topic)).findFirst().orElse(null);
-        if (mKey == null) {
-            return null;
+    private static boolean isMessageHandlersHas(String pattern) {
+        return messageHandlers.stream()
+                .filter(hc -> hc.getMessagePattern().equals(pattern)).findFirst().orElse(null) != null;
+    }
+
+    private static boolean isMatchPattern(String pattern, String topic) {
+        if (!pattern.contains(WILDCARD_ALL) && !pattern.contains(WILDCARD_PART)) {
+            // 不是通配订阅
+            return pattern.equals(topic);
         }
-        return messageHandler.get(mKey);
+        // 订阅中含有通配符
+        String[] patternSegments = pattern.split(SEPARATOR);
+        String[] topicSegments = pattern.split(SEPARATOR);
+        for (int i = 0; i < patternSegments.length; i ++) {
+            // 对各个主题层级进行匹配
+            String curPatternSeg = patternSegments[i];
+            String curTopicSeg = topicSegments.length > i ? topicSegments[i]: null;
+            if (curTopicSeg == null && !curPatternSeg.equals(WILDCARD_ALL)) {
+                // 主题层级比订阅层级少且相应的订阅层级不是#
+                return false;
+            }
+            if ("".equals(curTopicSeg) && "".equals(curPatternSeg)) {
+                // 可能以 / 开头
+                continue;
+            }
+            if (curPatternSeg.equals(WILDCARD_ALL)) {
+                // 是#通配，则#必须是最后一级
+                return i == patternSegments.length - 1;
+            }
+            // 当前层级不是通配，需要字符串相等
+            if (!curPatternSeg.equals(WILDCARD_PART) && !curPatternSeg.equals(curTopicSeg)) {
+                return false;
+            }
+        }
+        return patternSegments.length == topicSegments.length;
+    }
+
+    public static HandlerCache getHandlerMethod(String topic) {
+        return messageHandlers.stream()
+                        .filter(hc -> isMatchPattern(hc.getMessagePattern(), topic)).findFirst().orElse(null);
     }
 }
