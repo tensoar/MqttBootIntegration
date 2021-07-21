@@ -19,10 +19,12 @@ import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import com.alibaba.fastjson.JSON;
 
 import top.wteng.mqttbootintegration.entity.HandlerCache;
+import top.wteng.mqttbootintegration.util.DispatchUtil;
 import top.wteng.mqttbootintegration.util.HandlerBeanUtil;
 
 @SpringBootApplication
@@ -30,7 +32,8 @@ import top.wteng.mqttbootintegration.util.HandlerBeanUtil;
 public class MqttBootIntegrationApplication implements CommandLineRunner{
 	 private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	@Autowired public ApplicationContext applicationContext;
+	@Autowired private ApplicationContext applicationContext;
+	@Autowired private DispatchUtil dispatchUtil;
 	@Value("${mqtt.host}") private String mqttHost;
 	@Value("${mqtt.port}") private String mqttPort;
 
@@ -65,23 +68,8 @@ public class MqttBootIntegrationApplication implements CommandLineRunner{
 	@Bean
 	@ServiceActivator(inputChannel = "mqttReceiverChannel")
 	public MessageHandler messageHandler() {
+		// 分发消息,异步处理
 		return message ->
-				dispatchMessage((String) message.getHeaders().get("mqtt_receivedTopic"), (String)message.getPayload());
-	}
-
-	private void dispatchMessage(String topic, String payload) {
-		HandlerCache hc = HandlerBeanUtil.getHandlerMethod(topic);
-		if (hc == null) {
-			logger.warn(String.format("not find handler method for topic %s ...", topic));
-			return;
-		}
-		try {
-			Class<?> type = hc.getConvertType();
-			hc.getHandlerMethod().invoke(hc.getHandlerBean(), topic, type.getTypeName().equals("java.lang.String") ? payload: JSON.parseObject(payload, type));
-		} catch (InvocationTargetException e) {
-			logger.warn(String.format("invoke handler method for topic %s failed ...", topic));
-		} catch (IllegalAccessException e) {
-			logger.warn(String.format("access handler method for topic %s failed ...", topic));
-		}
+				dispatchUtil.dispatchMessage((String) message.getHeaders().get("mqtt_receivedTopic"), (String)message.getPayload());
 	}
 }
