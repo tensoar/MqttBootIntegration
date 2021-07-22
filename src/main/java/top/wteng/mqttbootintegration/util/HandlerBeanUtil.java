@@ -31,9 +31,9 @@ public class HandlerBeanUtil {
                             mhs.add(new HandlerCache(mp.value(), bean, m, parameterTypes.length > 1 ? parameterTypes[1] : String.class));
                         }
                     }
-                    messageHandlers.addAll(mhs);
                     return mhs.stream();
                 })
+                .peek(messageHandlers::add)
                 .map(HandlerCache::getMessagePattern)
                 .collect(Collectors.toList());
     }
