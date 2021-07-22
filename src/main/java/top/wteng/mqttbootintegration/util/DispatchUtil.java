@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 public class DispatchUtil {
     private final Logger logger = LoggerFactory.getLogger(DispatchUtil.class);
 
-    @Async
+    @Async // 实现异步
     public void dispatchMessage(String topic, String payload) {
         HandlerCache hc = HandlerBeanUtil.getHandlerMethod(topic);
         if (hc == null) {

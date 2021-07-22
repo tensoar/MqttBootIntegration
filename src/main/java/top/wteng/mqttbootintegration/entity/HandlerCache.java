@@ -4,10 +4,10 @@ package top.wteng.mqttbootintegration.entity;
 import java.lang.reflect.Method;
 
 public class HandlerCache {
-    private Object handlerBean;
-    private Method handlerMethod;
-    private String messagePattern;
-    private Class<?> convertType;
+    private Object handlerBean; // 处理函数所在的对象引用
+    private Method handlerMethod; // 处理函数的反射
+    private String messagePattern; // 主题，@MessagePattern注解中的值
+    private Class<?> convertType; // 消息体对应的实体类型，即处理函数第二个参数的类型
     public HandlerCache(String messagePattern, Object handlerBean, Method handlerMethod, Class<?> convertType) {
         this.messagePattern = messagePattern;
         this.handlerBean = handlerBean;

@@ -1,6 +1,5 @@
 package top.wteng.mqttbootintegration.handler;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import top.wteng.mqttbootintegration.annotation.Handler;

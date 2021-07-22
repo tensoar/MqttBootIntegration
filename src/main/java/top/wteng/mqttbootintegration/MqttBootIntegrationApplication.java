@@ -1,6 +1,5 @@
 package top.wteng.mqttbootintegration;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,18 +18,15 @@ import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
-import com.alibaba.fastjson.JSON;
 
-import top.wteng.mqttbootintegration.entity.HandlerCache;
 import top.wteng.mqttbootintegration.util.DispatchUtil;
 import top.wteng.mqttbootintegration.util.HandlerBeanUtil;
 
 @SpringBootApplication
-@EnableAsync
+@EnableAsync // 开启异步
 public class MqttBootIntegrationApplication implements CommandLineRunner{
-	 private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired private ApplicationContext applicationContext;
 	@Autowired private DispatchUtil dispatchUtil;
@@ -47,6 +43,7 @@ public class MqttBootIntegrationApplication implements CommandLineRunner{
 	}
 
 	@Bean
+	// mqtt接收频道
 	public MessageChannel mqttReceiverChannel() {
 		return new DirectChannel();
 	}
@@ -67,6 +64,7 @@ public class MqttBootIntegrationApplication implements CommandLineRunner{
 
 	@Bean
 	@ServiceActivator(inputChannel = "mqttReceiverChannel")
+	// 绑定了mqtt接收频道，收到消息后会触发此函数
 	public MessageHandler messageHandler() {
 		// 分发消息,异步处理
 		return message ->
