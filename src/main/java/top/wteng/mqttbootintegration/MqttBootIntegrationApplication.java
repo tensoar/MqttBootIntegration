@@ -16,6 +16,7 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
+import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -68,6 +69,6 @@ public class MqttBootIntegrationApplication implements CommandLineRunner{
 	public MessageHandler messageHandler() {
 		// 分发消息,异步处理
 		return message ->
-				dispatchUtil.dispatchMessage((String) message.getHeaders().get("mqtt_receivedTopic"), (String)message.getPayload());
+				dispatchUtil.dispatchMessage((String) message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC), (String)message.getPayload());
 	}
 }
