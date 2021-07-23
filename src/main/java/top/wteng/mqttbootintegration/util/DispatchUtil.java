@@ -6,12 +6,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import top.wteng.mqttbootintegration.entity.HandlerCache;
+import top.wteng.mqttbootintegration.entity.Temperature;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Set;
 
 @Component
 public class DispatchUtil {
     private final Logger logger = LoggerFactory.getLogger(DispatchUtil.class);
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Async // 实现异步
     public void dispatchMessage(String topic, String payload) {
@@ -22,7 +28,12 @@ public class DispatchUtil {
         }
         try {
             Class<?> type = hc.getConvertType();
-            hc.getHandlerMethod().invoke(hc.getHandlerBean(), topic, type.getTypeName().equals("java.lang.String") ? payload: JSON.parseObject(payload, type));
+            if (type.getTypeName().equals("java.lang.String")) {
+                hc.getHandlerMethod().invoke(hc.getHandlerBean(), topic, payload);
+            } else {
+                Object obj = JSON.parseObject(payload, type);
+                Set<ConstraintViolation<type>> constraintViolations = validator.validate(obj);
+            }
         } catch (InvocationTargetException e) {
             logger.warn(String.format("invoke handler method for topic %s failed ...", topic));
         } catch (IllegalAccessException e) {
