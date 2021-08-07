@@ -32,7 +32,15 @@ public class DispatchUtil {
                 hc.getHandlerMethod().invoke(hc.getHandlerBean(), topic, payload);
             } else {
                 Object obj = JSON.parseObject(payload, type);
-                Set<ConstraintViolation<type>> constraintViolations = validator.validate(obj);
+                Set<ConstraintViolation<Object>> constraintViolations = validator.validate(obj);
+                if (constraintViolations.size() > 0) {
+                    logger.warn("validation errored on " + type.getName());
+                    for (ConstraintViolation<Object> validation: constraintViolations) {
+                        logger.warn(validation.getMessage());
+                    }
+                } else {
+                    hc.getHandlerMethod().invoke(hc.getHandlerBean(), topic, obj);
+                }
             }
         } catch (InvocationTargetException e) {
             logger.warn(String.format("invoke handler method for topic %s failed ...", topic));

@@ -7,12 +7,12 @@ import javax.validation.constraints.Positive;
 
 public class Temperature {
     @NotNull
-    @Positive
+    @Positive(message = "id必须为正整数")
     private Integer id;
 
     @NotNull
-    @Min(-100)
-    @Max(100)
+    @Min(value = -100, message = "Temperature::温度下限不能低于-100")
+    @Max(value = 100, message = "Temperature::温度上限不能高于100")
     private float value;
 
     public Integer getId() {
