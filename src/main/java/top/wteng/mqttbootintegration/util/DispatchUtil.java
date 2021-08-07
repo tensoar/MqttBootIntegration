@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import top.wteng.mqttbootintegration.entity.HandlerCache;
-import top.wteng.mqttbootintegration.entity.Temperature;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
