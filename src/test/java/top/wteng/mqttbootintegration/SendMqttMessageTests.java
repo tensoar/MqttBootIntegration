@@ -14,7 +14,7 @@ public class SendMqttMessageTests {
     @Test
     public void sendSomeMessage() {
         String topic = "temperature";
-        for (int i = 0; i < 5; i ++) {
+        for (int i = 0; i < 15; i ++) {
             Temperature temperature = new Temperature();
             temperature.setId(i);
             temperature.setValue(i * 10);

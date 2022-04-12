@@ -1,3 +1,7 @@
 spring:
   mqtt:
-    url: tcp://localhost:1883
+    url: tcp://192.168.18.223:1883
+
+logging:
+  level:
+    root: debug

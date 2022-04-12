@@ -40,7 +40,9 @@ public class HandlerBeanUtil {
 
     private static boolean isMessageHandlersHas(String pattern) {
         return messageHandlers.stream()
-                .filter(hc -> hc.getMessagePattern().equals(pattern)).findFirst().orElse(null) != null;
+                .filter(hc -> hc.getMessagePattern().equals(pattern))
+                .findFirst()
+                .orElse(null) != null;
     }
 
     private static boolean isMatchPattern(String pattern, String topic) {
@@ -77,6 +79,8 @@ public class HandlerBeanUtil {
 
     public static HandlerCache getHandlerMethod(String topic) {
         return messageHandlers.stream()
-                        .filter(hc -> isMatchPattern(hc.getMessagePattern(), topic)).findFirst().orElse(null);
+                .filter(hc -> isMatchPattern(hc.getMessagePattern(), topic))
+                .findFirst()
+                .orElse(null);
     }
 }
