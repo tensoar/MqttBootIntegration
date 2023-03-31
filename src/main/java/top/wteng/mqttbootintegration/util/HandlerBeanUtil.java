@@ -52,7 +52,7 @@ public class HandlerBeanUtil {
         }
         // 订阅中含有通配符
         String[] patternSegments = pattern.split(SEPARATOR);
-        String[] topicSegments = pattern.split(SEPARATOR);
+        String[] topicSegments = topic.split(SEPARATOR);
         for (int i = 0; i < patternSegments.length; i ++) {
             // 对各个主题层级进行匹配
             String curPatternSeg = patternSegments[i];
